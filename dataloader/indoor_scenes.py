@@ -15,6 +15,8 @@ from tqdm import tqdm
 def get_num_classes(dataset):
     if dataset.startswith('scenenet'):
         return 13
+    elif dataset.startswith('cropweed'):
+        return 4
     return 40
 
 class IndoorScenes(dataset_base.DatasetBase):
@@ -25,7 +27,7 @@ class IndoorScenes(dataset_base.DatasetBase):
         self.num_classes = get_num_classes(dataset) 
         self.dataset_name = dataset
 
-        with open(os.path.join(constants.SSD_DATASET_ROOT, dataset, "selections", f"{split}_frames.txt"), "r") as fptr:
+        with open(os.path.join(constants.SSD_DATASET_ROOT, "selections", f"{split}_frames.txt"), "r") as fptr:
             self.image_path_subset = [u'{}'.format(x.strip()).encode('ascii') for x in fptr.readlines() if x is not '']
         
         if split == 'train':
@@ -48,7 +50,7 @@ class ActiveIndoorScenes(IndoorScenes):
         super(ActiveIndoorScenes, self).__init__(dataset, lmdb_handle, base_size, seed_set)
         self.remaining_image_paths = None
         all_train_paths = None
-        with open(os.path.join(constants.SSD_DATASET_ROOT, dataset, "selections", "train_frames.txt"), "r") as fptr:
+        with open(os.path.join(constants.SSD_DATASET_ROOT, "selections", "train_frames.txt"), "r") as fptr:
             all_train_paths = [u'{}'.format(x.strip()).encode('ascii') for x in fptr.readlines() if x is not '']
             self.remaining_image_paths = [x for x in all_train_paths if x not in self.image_path_subset]
 
@@ -71,12 +73,55 @@ class ActiveIndoorScenes(IndoorScenes):
         self.remaining_image_paths = None
         with open(path, "r") as fptr:
             self.image_path_subset = [u'{}'.format(x.strip()).encode('ascii') for x in fptr.readlines() if x is not '']
-        
+
+        if 'remap'.encode() in self.image_path_subset:
+            del self.image_path_subset[self.image_path_subset.index('remap'.encode())]
         all_train_paths = None
-        with open(os.path.join(constants.SSD_DATASET_ROOT, self.dataset_name, "selections", "train_frames.txt"), "r") as fptr:
+        with open(os.path.join(constants.SSD_DATASET_ROOT, "selections", "train_frames.txt"), "r") as fptr:
             all_train_paths = [u'{}'.format(x.strip()).encode('ascii') for x in fptr.readlines() if x is not '']
             self.remaining_image_paths = [x for x in all_train_paths if x not in self.image_path_subset]
-        
+
+
+class CropWeed(IndoorScenes):
+
+    def __init__(self, dataset, lmdb_handle, _, base_size, seed_set):
+
+        super(CropWeed, self).__init__(dataset, lmdb_handle, base_size, seed_set)
+        self.remaining_image_paths = None
+        all_train_paths = None
+        with open(os.path.join(constants.SSD_DATASET_ROOT, "selections", "train_frames.txt"), "r") as fptr:
+            all_train_paths = [u'{}'.format(x.strip()).encode('ascii') for x in fptr.readlines() if x is not '']
+            self.remaining_image_paths = [x for x in all_train_paths if x not in self.image_path_subset]
+
+    def get_labeled_pixel_count(self):
+        return len(self.image_path_subset) * self.base_size[0] * self.base_size[1]
+
+    def get_fraction_of_labeled_data(self):
+        return self.get_labeled_pixel_count() / (
+                    (len(self.image_path_subset) + len(self.remaining_image_paths)) * self.base_size[0] *
+                    self.base_size[1])
+
+    def expand_training_set(self, paths):
+        self.image_path_subset.extend(paths)
+        for x in paths:
+            if x in self.remaining_image_paths:
+                self.remaining_image_paths.remove(x)
+
+    def get_selections(self):
+        return self.image_path_subset
+
+    def load_selections(self, path):
+        self.remaining_image_paths = None
+        with open(path, "r") as fptr:
+            self.image_path_subset = [u'{}'.format(x.strip()).encode('ascii') for x in fptr.readlines() if x is not '']
+
+        all_train_paths = None
+        with open(os.path.join(constants.SSD_DATASET_ROOT, self.dataset_name, "selections", "train_frames.txt"),
+                  "r") as fptr:
+            all_train_paths = [u'{}'.format(x.strip()).encode('ascii') for x in fptr.readlines() if x is not '']
+            self.remaining_image_paths = [x for x in all_train_paths if x not in self.image_path_subset]
+
+
 class ActiveIndoorScenesPseudoLabeled(IndoorScenes):
 
     def __init__(self, dataset, lmdb_handle, _, base_size, seed_set):

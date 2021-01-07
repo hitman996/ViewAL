@@ -81,7 +81,6 @@ class DatasetBase(data.Dataset):
         return len(self.image_path_subset)
 
     def __getitem__(self, index):
-
         image_path = self.image_path_subset[index]
         loaded_npy = self.lmdb_handle.get_numpy_object(image_path)
 

@@ -11,7 +11,7 @@ def parse_args():
     parser.add_argument('--out-stride', type=int, default=16,
                         help='network output stride (default: 16)')
     parser.add_argument('--dataset', type=str, default='scannet-sample',
-                        choices=['scannet', 'scenenet-rgbd', 'matterport3d','scannet-sample'],
+                        choices=['scannet', 'scenenet-rgbd', 'matterport3d', 'scannet-sample', 'cropweed'],
                         help='dataset name (default: scannet-sample)')
     parser.add_argument('--workers', type=int, default=4,
                         metavar='N', help='dataloader threads')

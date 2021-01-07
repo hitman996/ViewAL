@@ -3,11 +3,14 @@ import os
 from pathlib import Path
 import random
 from multiprocessing import Pool
+import constants
 from skimage.io import imread
     
-raw_files_location = "ViewAL/dataset/scannet-sample/raw/selections"
-seeds_segmentor_path = "seeds-revised/bin/Release/reseeds_cli.exe"
-splits_path = Path('ViewAL/dataset/scannet-sample/selections')
+# raw_files_location = "ViewAL/dataset/scannet-sample/raw/selections"
+raw_files_location = "/home/robot/datasets/structured_cwc/train/"
+seeds_segmentor_path = "/home/robot/git/seeds-revised/bin/reseeds_cli"
+# seeds_segmentor_path = "/home/robot/git/seeds-revised/bin/reseeds_cli"
+splits_path = Path('/home/robot/datasets/structured_cwc/selections/')
 
 def read_scene_list(path):
     with open(path, "r") as fptr:
@@ -59,20 +62,20 @@ def call(*popenargs, **kwargs):
 
 def create_superpixel_segmentations():
     all_args = "--spatial-weight 0.2 --superpixels 40 --iterations 10 --confidence 0.001"
-    colordir_src = os.path.join(raw_files_location, "color")
+    colordir_src = os.path.join(constants.HDD_DATASET_ROOT, 'train', 'img')
     args = all_args.split(" ")
     with Pool(processes=8) as pool:
         arg_list = []
         for c in tqdm(os.listdir(colordir_src)):
             color_base_name = c.split(".")[0]
-            spx_target = os.path.join(raw_files_location, "superpixel", f"{color_base_name}.png")
+            spx_target = os.path.join(constants.HDD_DATASET_ROOT, "superpixel", f"{color_base_name}.png")
             arg_list.append((seeds_segmentor_path, "--input", os.path.join(colordir_src, c), "--output", spx_target,
                              args[0], args[1], args[2], args[3], args[4], args[5], args[6], args[7], "--index"))
         pool.starmap(call, tqdm(arg_list))
 
 
 def create_split_mixed():
-    list_of_frames = [x.split(".")[0] for x in os.listdir(os.path.join(raw_files_location, "color"))]
+    list_of_frames = [x.split(".")[0] for x in os.listdir(os.path.join(raw_files_location, "img"))]
     train_frames = [list_of_frames[i] for i in random.sample(range(len(list_of_frames)), int(0.60 * len(list_of_frames)))]
     remaining_frames = [x for x in list_of_frames if x not in train_frames]
     val_frames = [remaining_frames[i] for i in random.sample(range(len(remaining_frames)), int(0.15 * len(list_of_frames)))]
@@ -97,7 +100,7 @@ def create_seed_set():
             fptr.write(x.split(".")[0]+"\n")
 
 if __name__=='__main__':
-    create_superpixel_segmentations()
+    # create_superpixel_segmentations()
     create_split_mixed() # or create_split()
     create_seed_set()
     

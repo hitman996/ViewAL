@@ -7,15 +7,16 @@ from pathlib import Path
 from tqdm import tqdm
 import numpy as np
 from scipy import ndimage
+import constants
 
 
 def to_lmdb(root_path, lmdb_path):
 
-    image_paths = [x.split(".")[0] for x in os.listdir(os.path.join(root_path, "color"))]
+    image_paths = [x.split(".")[0] for x in os.listdir(os.path.join(root_path, "img"))]
     print('#images: ', len(image_paths))
     print("Generate LMDB to %s" % lmdb_path)
 
-    image_size = Image.open(os.path.join(root_path, "color", f'{image_paths[0]}.jpg')).size
+    image_size = Image.open(os.path.join(root_path, 'img', f'{image_paths[0]}.png')).size
     pixels = image_size[0] * image_size[1] * len(image_paths)
 
     print("Pixels in split: ", pixels)
@@ -31,15 +32,18 @@ def to_lmdb(root_path, lmdb_path):
     txn = db.begin(write=True)
 
     key_list = []
-
+    # image_paths.remove('remap')
     for idx, path in tqdm(enumerate(image_paths)):
-        jpg_path = os.path.join(root_path, 'color', f'{path}.jpg')
-        png_path = os.path.join(root_path, 'label', f'{path}.png')
+        jpg_path = os.path.join(root_path, 'img', f'{path}.png')
+        png_path = os.path.join(root_path, 'lbl', f'{path}.png')
         image = np.array(Image.open(jpg_path).convert('RGB'), dtype=np.uint8)
         label = np.array(Image.open(png_path), dtype=np.uint8)
-        label -= 1
-        label[label == -1] = 255
-        label[label >= 40] = 255
+        # label -= 1
+        # label[label == -1] = 255
+        # label[label >= 40] = 255
+        label[label == 0] = 1    # background
+        label[label == 128] = 2  # background
+        label[label == 255] = 3  # background
 
         txn.put(u'{}'.format(path).encode('ascii'), pickle.dumps(np.dstack((image, label)), protocol=3))
         key_list.append(path)
@@ -60,6 +64,6 @@ def to_lmdb(root_path, lmdb_path):
 
 
 if __name__ == '__main__':
-	PATH_TO_SELECTIONS = "ViewAL/dataset/scannet-sample/raw/selections"
-	PATH_TO_LMDB = "ViewAL/dataset/scannet-sample/dataset.lmdb"
+    PATH_TO_SELECTIONS = os.path.join(constants.HDD_DATASET_ROOT, 'train')
+    PATH_TO_LMDB = os.path.join(constants.HDD_DATASET_ROOT, 'dataset2.lmdb')
     to_lmdb(PATH_TO_SELECTIONS, PATH_TO_LMDB)
