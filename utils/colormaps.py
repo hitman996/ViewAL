@@ -56,13 +56,19 @@ def create_nyu3_label_colormap():
         3: [158, 0, 142],
     }
 
+def create_cropweed_colormap():
+    return {
+        0: [0, 0, 0],
+        1: [0, 255, 0],
+        2: [255, 0, 0],
+    }
 
 def get_colormap(dataset):
 
     if dataset.startswith('scannet') or dataset.startswith('suncg') or dataset.startswith('matterport')  or dataset.startswith('scenenet'):
         return create_nyu40_label_colormap()
     elif dataset.startswith('cropweed'):
-        return create_nyu3_label_colormap()
+        return create_cropweed_colormap()
     raise Exception('No colormap for dataset found')
 
 
