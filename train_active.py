@@ -22,7 +22,7 @@ def main():
     # hardcoding scannet
 
     # get handle to lmdb dataset
-    lmdb_handle = dataset_base.LMDBHandle(os.path.join(constants.HDD_DATASET_ROOT, args.dataset, "dataset.lmdb"), args.memory_hog)
+    lmdb_handle = dataset_base.LMDBHandle(os.path.join(constants.HDD_DATASET_ROOT, "dataset2.lmdb"), args.memory_hog)
     
     # create train val and test sets
     train_set = get_active_dataset(args.active_selection_mode)(args.dataset, lmdb_handle, args.superpixel_dir, args.base_size, 'seedset_0')
