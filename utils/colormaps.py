@@ -61,6 +61,7 @@ def create_cropweed_colormap():
         0: [0, 0, 0],
         1: [0, 255, 0],
         2: [255, 0, 0],
+        3: [158, 0, 142],
     }
 
 def get_colormap(dataset):
