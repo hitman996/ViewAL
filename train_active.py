@@ -5,6 +5,7 @@ import constants
 from utils.saver import Saver
 from utils.trainer import Trainer
 from dataloader.indoor_scenes import IndoorScenes
+from dataloader.indoor_scenes import CropWeed
 from dataloader.indoor_scenes import get_active_dataset
 from dataloader import dataset_base
 from active_selection import get_active_selector
@@ -25,7 +26,8 @@ def main():
     lmdb_handle = dataset_base.LMDBHandle(os.path.join(constants.HDD_DATASET_ROOT, "dataset2.lmdb"), args.memory_hog)
     
     # create train val and test sets
-    train_set = get_active_dataset(args.active_selection_mode)(args.dataset, lmdb_handle, args.superpixel_dir, args.base_size, 'seedset_0')
+    # train_set = get_active_dataset(args.active_selection_mode)(args.dataset, lmdb_handle, args.superpixel_dir, args.base_size, 'seedset_0')
+    train_set = CropWeed(args.dataset, lmdb_handle, args.superpixel_dir, args.base_size, 'seedset_0')
     val_set = IndoorScenes(args.dataset, lmdb_handle, args.base_size, 'val')
     test_set = IndoorScenes(args.dataset, lmdb_handle, args.base_size, 'test')
 

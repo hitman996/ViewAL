@@ -37,7 +37,10 @@ class IndoorScenes(dataset_base.DatasetBase):
 
 def get_active_dataset(method_name):
     if method_name.endswith("_region"):
-        return ActiveIndoorScenesRegional
+        if "crop" in method_name:
+            return CropWeed
+        else:
+            return ActiveIndoorScenesRegional
     elif method_name == 'ceal':
         return ActiveIndoorScenesPseudoLabeled
     else:
@@ -116,7 +119,7 @@ class CropWeed(IndoorScenes):
             self.image_path_subset = [u'{}'.format(x.strip()).encode('ascii') for x in fptr.readlines() if x is not '']
 
         all_train_paths = None
-        with open(os.path.join(constants.SSD_DATASET_ROOT, self.dataset_name, "selections", "train_frames.txt"),
+        with open(os.path.join(constants.SSD_DATASET_ROOT, "selections", "train_frames.txt"),
                   "r") as fptr:
             all_train_paths = [u'{}'.format(x.strip()).encode('ascii') for x in fptr.readlines() if x is not '']
             self.remaining_image_paths = [x for x in all_train_paths if x not in self.image_path_subset]
@@ -185,7 +188,7 @@ class ActiveIndoorScenesRegional(IndoorScenes):
         super(ActiveIndoorScenesRegional, self).__init__(dataset, lmdb_handle, base_size, seed_set)
         self.all_train_paths = None
 
-        with open(os.path.join(constants.SSD_DATASET_ROOT, dataset, "selections", "train_frames.txt"), "r") as fptr:
+        with open(os.path.join(constants.SSD_DATASET_ROOT, "selections", "train_frames.txt"), "r") as fptr:
             self.all_train_paths = [u'{}'.format(x.strip()).encode('ascii') for x in fptr.readlines() if x is not '']
         
         self.path_to_pixel_map = OrderedDict({})
@@ -285,9 +288,16 @@ class IndoorScenesWithAllInfo(dataset_base.DatasetBase):
             self.info_id_split_idx = 1
             self.pose_separator = ","
             self.process_superpixels = self._process_superpixels
-        for i, im_path in enumerate(paths):
-            scene_id = "_".join(im_path.decode().split("_")[:self.scene_id_split_idx])
-            self.scene_id_to_index[scene_id].append(i)
+        elif dataset.startswith('cropweed'):
+            self.process_info = self.process_info_cropweed
+            self.depth_ext = ".png"
+            self.scene_id_split_idx = 2
+            self.info_id_split_idx = 1
+            self.pose_separator = ","
+            self.process_superpixels = self._process_superpixels
+        # for i, im_path in enumerate(paths):
+        #     scene_id = "_".join(im_path.decode().split("_")[:self.scene_id_split_idx])
+        #     self.scene_id_to_index[scene_id].append(i)
 
     @staticmethod
     def get_scene_id_from_image_path(dataset, image_path):
@@ -344,6 +354,19 @@ class IndoorScenesWithAllInfo(dataset_base.DatasetBase):
         return matrix
 
     def process_info_scenenet(self, _):
+        matrix = np.zeros((4, 4), dtype=np.float32)
+        matrix[0, 0] = 277.1281292110204
+        matrix[1, 1] = 289.7056274847714
+        matrix[0, 2] = 160
+        matrix[1, 2] = 120
+        matrix[2, 2] = 1
+        matrix[0, 3] = 0
+        matrix[1, 3] = 0
+        matrix[2, 3] = 0
+        matrix[3, 3] = 1
+        return matrix
+
+    def process_info_cropweed(self, _):
         matrix = np.zeros((4, 4), dtype=np.float32)
         matrix[0, 0] = 277.1281292110204
         matrix[1, 1] = 289.7056274847714

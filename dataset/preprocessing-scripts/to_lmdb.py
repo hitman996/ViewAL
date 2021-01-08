@@ -42,8 +42,8 @@ def to_lmdb(root_path, lmdb_path):
         # label[label == -1] = 255
         # label[label >= 40] = 255
         label[label == 0] = 1    # background
-        label[label == 128] = 2  # background
-        label[label == 255] = 3  # background
+        label[label == 128] = 2  # crop
+        label[label == 255] = 3  # weed
 
         txn.put(u'{}'.format(path).encode('ascii'), pickle.dumps(np.dstack((image, label)), protocol=3))
         key_list.append(path)
